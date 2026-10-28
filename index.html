@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QCM Résidanat</title>
+<style>
+:root{--bg:#f3f6f8;--card:#fff;--ink:#14232b;--mute:#5d6f78;--line:#d5dee3;--main:#0b5c73;--ok:#1b7f4b;--okbg:#e2f4ea;--ko:#b3261e;--kobg:#fbe5e3;--tip:#fff4d6;--tipline:#c98a00}
+@media(prefers-color-scheme:dark){:root{--bg:#10191e;--card:#18262d;--ink:#e8f0f3;--mute:#9bb0b8;--line:#2b3d46;--main:#5fc2dc;--ok:#6fd49b;--okbg:#17382a;--ko:#ff8a80;--kobg:#3d1f1d;--tip:#3a3115;--tipline:#e0a82e}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 system-ui,sans-serif}
+main{max-width:680px;margin:0 auto;padding:16px 16px 90px}
+h1{font-size:1.5rem;margin:8px 0 2px}h2{font-size:1.1rem;margin:22px 0 8px;color:var(--mute)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:8px 0}
+button{font:inherit;cursor:pointer}.btn{background:var(--main);color:var(--bg);border:0;border-radius:8px;padding:12px 18px;font-weight:600;width:100%;margin-top:12px}
+.btn.alt{background:transparent;color:var(--main);border:1px solid var(--main)}
+.ses{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:8px 0;color:var(--ink)}
+.ses small{color:var(--mute)}.bar{height:6px;background:var(--line);border-radius:3px;margin:8px 0}.bar i{display:block;height:100%;background:var(--main);border-radius:3px}
+.opt{display:flex;gap:10px;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:12px;margin:8px 0;color:var(--ink)}
+.opt b{min-width:1.4em}.opt.sel{border-color:var(--main);background:color-mix(in srgb,var(--main) 12%,var(--card))}
+.opt.ok{border-color:var(--ok);background:var(--okbg)}.opt.ko{border-color:var(--ko);background:var(--kobg)}.opt.miss{border-color:var(--ok);border-style:dashed}
+.badge{display:inline-block;font-size:.8rem;border-radius:6px;padding:2px 8px;margin:6px 6px 0 0;border:1px solid var(--line);color:var(--mute)}
+.badge.ia{border-color:var(--tipline);color:var(--tipline)}
+.tip{background:var(--tip);border-left:4px solid var(--tipline);border-radius:6px;padding:10px 12px;margin-top:12px}
+.top{display:flex;justify-content:space-between;align-items:center;color:var(--mute);font-size:.9rem}
+.back{background:none;border:0;color:var(--main);padding:6px 0}
+.big{font-size:3rem;font-weight:700;margin:6px 0}
+</style></head><body><main id="app"></main>
+<script src="data/questions.js"></script>
+<script>
+const $=document.getElementById("app");
+const store={get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const SRC={medquest:"Corrigé Medquest",sujet:"Corrigé du sujet",ia:"Correction par IA (à vérifier)"};
+let S,i,sel,done,score;
+function home(){
+  const byUniv={};SESSIONS.forEach(s=>(byUniv[s.univ]=byUniv[s.univ]||[]).push(s));
+  let h='<h1>QCM Résidanat</h1><div class="top">Annales classées par université et par année</div>';
+  Object.keys(byUniv).forEach(u=>{h+=`<h2>${u}</h2>`;byUniv[u].sort((a,b)=>b.year-a.year).forEach(s=>{
+    const best=store.get("best:"+s.id);
+    h+=`<button class="ses" onclick="start('${s.id}')"><b>${s.year} · ${s.title}</b><br><small>${s.date} · ${s.questions.length} questions · ${s.answerSource}${best!=null?" · meilleur score "+best+"/"+s.questions.length:""}</small></button>`})});
+  $.innerHTML=h}
+function start(id){S=SESSIONS.find(s=>s.id==id);const p=store.get("pos:"+id)||0;i=p>=S.questions.length?0:p;score=0;show()}
+function show(){
+  const q=S.questions[i];sel=new Set();done=false;
+  let h=`<button class="back" onclick="home()">← Sessions</button><div class="top"><span>${S.univ} ${S.year}</span><span>Question ${i+1}/${S.questions.length}</span></div><div class="bar"><i style="width:${(i/S.questions.length)*100}%"></i></div>`;
+  h+=`<div class="card"><b>${q.n}. ${q.q}</b></div><div id="opts">`;
+  Object.keys(q.o).forEach(k=>h+=`<button class="opt" id="o${k}" onclick="tog('${k}')"><b>${k}</b><span>${q.o[k]}</span></button>`);
+  h+=`</div><div id="res"></div><button class="btn" id="go" onclick="check()">Valider</button>`;
+  $.innerHTML=h;window.scrollTo(0,0)}
+function tog(k){if(done)return;sel.has(k)?sel.delete(k):sel.add(k);document.getElementById("o"+k).classList.toggle("sel")}
+function check(){
+  if(done)return next();
+  const q=S.questions[i],right=new Set(q.a.split(""));done=true;
+  Object.keys(q.o).forEach(k=>{const e=document.getElementById("o"+k);e.classList.remove("sel");
+    if(right.has(k)&&sel.has(k))e.classList.add("ok");else if(sel.has(k))e.classList.add("ko");else if(right.has(k))e.classList.add("miss")});
+  const perfect=[...right].every(k=>sel.has(k))&&sel.size==right.size;if(perfect)score++;
+  document.getElementById("res").innerHTML=`<div class="card"><b>${perfect?"Correct ✓":"Réponse attendue : "+q.a.split("").join(", ")}</b><br><span class="badge ${q.src=="ia"?"ia":""}">${SRC[q.src]}</span>${q.tip?`<div class="tip">💡 ${q.tip}</div>`:""}</div>`;
+  store.set("pos:"+S.id,i+1);
+  const g=document.getElementById("go");g.textContent=i+1<S.questions.length?"Question suivante":"Voir le score";}
+function next(){i++;if(i<S.questions.length)return show();
+  const b=store.get("best:"+S.id);if(b==null||score>b)store.set("best:"+S.id,score);store.set("pos:"+S.id,0);
+  $.innerHTML=`<div class="card"><div class="top">Session terminée</div><div class="big">${score}/${S.questions.length}</div><div>Réponses entièrement justes</div></div><button class="btn" onclick="start('${S.id}')">Recommencer</button><button class="btn alt" onclick="home()">Retour aux sessions</button>`}
+home();
+</script></body></html>
