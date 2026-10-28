@@ -1,3 +1,1 @@
-# QCM Résidanat
-Site statique : ouvrir index.html, ou l'héberger avec GitHub Pages.
-Les questions sont dans data/questions.js (une session = un bloc SESSIONS.push).
+Site statique. index.html + un fichier sXXXX.js par session, tous à la racine.

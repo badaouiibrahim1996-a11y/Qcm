@@ -23,13 +23,20 @@ button{font:inherit;cursor:pointer}.btn{background:var(--main);color:var(--bg);b
 .back{background:none;border:0;color:var(--main);padding:6px 0}
 .big{font-size:3rem;font-weight:700;margin:6px 0}
 </style></head><body><main id="app"></main>
-<script src="data/questions.js"></script>
+<script>window.SESSIONS=[];</script>
+<script src="s2022.js" onerror="this.remove()"></script>
+<script src="s2023.js" onerror="this.remove()"></script>
+<script src="s2024-ouargla.js" onerror="this.remove()"></script>
+<script src="s2024-constantine.js" onerror="this.remove()"></script>
+<script src="s2025.js" onerror="this.remove()"></script>
+
 <script>
 const $=document.getElementById("app");
 const store={get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const SRC={medquest:"Corrigé Medquest",sujet:"Corrigé du sujet",ia:"Correction par IA (à vérifier)"};
 let S,i,sel,done,score;
 function home(){
+  if(!window.SESSIONS.length){$.innerHTML="<h1>QCM Résidanat</h1><div class=card>Aucune session chargée. Vérifie que les fichiers s2025.js (etc.) sont à la racine du dépôt.</div>";return}
   const byUniv={};SESSIONS.forEach(s=>(byUniv[s.univ]=byUniv[s.univ]||[]).push(s));
   let h='<h1>QCM Résidanat</h1><div class="top">Annales classées par université et par année</div>';
   Object.keys(byUniv).forEach(u=>{h+=`<h2>${u}</h2>`;byUniv[u].sort((a,b)=>b.year-a.year).forEach(s=>{
